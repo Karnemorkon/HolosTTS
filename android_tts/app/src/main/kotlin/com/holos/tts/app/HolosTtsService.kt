@@ -57,8 +57,8 @@ class HolosTtsService : TextToSpeechService() {
     }
 
     override fun onGetLanguage(): Array<String> {
-        Log.i(TAG, "=== onGetLanguage: returning [$LANG, UA, ''] ===")
-        return arrayOf(LANG, "UA", "")
+        Log.i(TAG, "=== onGetLanguage: returning [$LANG] ===")
+        return arrayOf(LANG)
     }
 
     /**
