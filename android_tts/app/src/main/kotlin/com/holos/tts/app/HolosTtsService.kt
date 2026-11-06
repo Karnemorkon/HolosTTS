@@ -39,12 +39,14 @@ class HolosTtsService : TextToSpeechService() {
     private var engineReady = false
 
     override fun onCreate() {
-        super.onCreate()
         Log.i(TAG, "=== HolosTtsService onCreate ===")
+        // ВАЖЛИВО: суперклас TextToSpeechService.onCreate() викликає onLoadLanguage(),
+        // тож HandlerThread має бути готовий ДО super.onCreate().
         synthThread = HandlerThread("HolosTts-synth", android.os.Process.THREAD_PRIORITY_BACKGROUND)
         synthThread.start()
         synthHandler = Handler(synthThread.looper)
         Log.i(TAG, "HandlerThread started")
+        super.onCreate()
     }
 
     override fun onBind(intent: Intent): android.os.IBinder? {
@@ -56,12 +58,21 @@ class HolosTtsService : TextToSpeechService() {
 
     override fun onGetLanguage(): Array<String> {
         Log.i(TAG, "=== onGetLanguage ===")
-        return arrayOf("uk")
+        return arrayOf(LANG, "UA", "")
     }
+
+    /**
+     * Система може передавати як 2-літерні ISO-639-1/ISO-3166-1 коди (`uk`/`UA`),
+     * так і 3-літерні ISO-639-2/ISO-3166-1 alpha-3 (`ukr`/`UKR`) — залежно від
+     * реалізації TTS-клієнта. Нормалізуємо обидва варіанти.
+     */
+    private fun isUkrainian(language: String?): Boolean =
+        language != null && (language.equals(LANG, ignoreCase = true) || language.equals("ukr", ignoreCase = true))
 
     override fun onIsLanguageAvailable(language: String, country: String?, variant: String?): Int {
         Log.i(TAG, "=== onIsLanguageAvailable: lang='$language' country='$country' variant='$variant' ===")
-        val available = if (language.equals(LANG, ignoreCase = true) && (country == null || country.equals("UA", ignoreCase = true) || country.isEmpty())) {
+        val available = if (isUkrainian(language)) {
+            // Рушій лише український: мова доступна незалежно від країни запиту.
             Log.i(TAG, "Language uk available")
             TextToSpeech.LANG_AVAILABLE
         } else {
@@ -73,7 +84,7 @@ class HolosTtsService : TextToSpeechService() {
 
     override fun onLoadLanguage(language: String, country: String?, variant: String?): Int {
         Log.i(TAG, "=== onLoadLanguage: lang='$language' country='$country' variant='$variant' ===")
-        if (language.equals(LANG, ignoreCase = true)) {
+        if (isUkrainian(language)) {
             Log.i(TAG, "Loading uk language, initializing engine...")
             synthHandler.post { initEngine() }
             return TextToSpeech.LANG_AVAILABLE

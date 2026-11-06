@@ -47,7 +47,14 @@ object StressDictionary {
                         val parts = line.split("\t", limit = 2)
                         if (parts.size != 2) return@forEach
                         val word = parts[0]
-                        val accents = parts[1].split(",").map { it.toInt() }.toIntArray()
+                        // Друге поле може бути порожнім (слова без наголосу, напр. «а», «б»).
+                        if (parts[1].isBlank()) return@forEach
+                        val accents = try {
+                            parts[1].split(",").map { it.toInt() }.toIntArray()
+                        } catch (e: NumberFormatException) {
+                            // Пропускаємо рядок із некоректними індексами.
+                            return@forEach
+                        }
                         stressMap[word] = accents
                     }
                 }

@@ -129,10 +129,10 @@ object UkrainianG2PEngine {
 
     /** Довгі приголосні (ортографічно двогрошені). */
     private val geminateRegexes = listOf(
-        Regex("([бвгґд])\\1") to "\\1ː",
-        Regex("([^д]+)жж") to "\\1жː",
-        Regex("([^д]+)зз") to "\\1зː",
-        Regex("([йклмнпрстфхцчшщ])\\1") to "\\1ː",
+        Regex("([бвгґд])\\1") to "$1ː",
+        Regex("([^д]+)жж") to "$1жː",
+        Regex("([^д]+)зз") to "$1зː",
+        Regex("([йклмнпрстфхцчшщ])\\1") to "$1ː",
     )
     private val geminateSpecial = listOf(
         "дждж" to "джː",
@@ -212,17 +212,17 @@ object UkrainianG2PEngine {
         }
 
         // --- move stress mark before vowel ---
-        p = p.replace(Regex("([aɛiɪuɔ])([ˈˌ])"), "\\2\\1")
+        p = p.replace(Regex("([aɛiɪuɔ])([ˈˌ])"), "$2$1")
 
         // --- auto-stress monosyllabic words ---
         val vowelCount = Regex("[$vowelNoI]").findAll(p).count()
         if (vowelCount == 1) {
-            p = p.replace(Regex("([aɛiɪuɔ])"), "⁀\\1")
+            p = p.replace(Regex("([aɛiɪuɔ])"), "⁀$1")
         }
 
         // --- palatalizable consonants before /i/ or /j/ become palatalized ---
-        p = p.replace(Regex("($palatalizableC)([ː]?)([ˈˌ⁀]?)i"), "\\1ʲ\\2\\3i")
-        p = p.replace(Regex("($palatalizableC)([ː]?)j"), "\\1ʲ\\2")
+        p = p.replace(Regex("($palatalizableC)([ː]?)([ˈˌ⁀]?)i"), "$1ʲ$2$3i")
+        p = p.replace(Regex("($palatalizableC)([ː]?)j"), "$1ʲ$2")
 
         // --- eliminate garbage [ʲːj] sequences ---
         p = p.replace("ʲːj", "ʲː")
@@ -236,11 +236,11 @@ object UkrainianG2PEngine {
         }
 
         // --- softening of first consonant before soft second ---
-        p = p.replace(Regex("([tdszn])(.)ʲ"), "\\1ʲ\\2ʲ")
-        p = p.replace(Regex("([tdsznl])t͡sʲ"), "\\1ʲt͡sʲ")
-        p = p.replace(Regex("([tdsznl])d͡zʲ"), "\\1ʲd͡zʲ")
-        p = p.replace(Regex("t͡s(.)ʲ"), "t͡sʲ\\1ʲ")
-        p = p.replace(Regex("d͡z(.)ʲ"), "d͡zʲ\\1ʲ")
+        p = p.replace(Regex("([tdszn])(.)ʲ"), "$1ʲ$2ʲ")
+        p = p.replace(Regex("([tdsznl])t͡sʲ"), "$1ʲt͡sʲ")
+        p = p.replace(Regex("([tdsznl])d͡zʲ"), "$1ʲd͡zʲ")
+        p = p.replace(Regex("t͡s(.)ʲ"), "t͡sʲ$1ʲ")
+        p = p.replace(Regex("d͡z(.)ʲ"), "d͡zʲ$1ʲ")
         p = p.replace("d͡zt͡sʲ", "d͡zʲt͡sʲ")
         p = p.replace("t͡sd͡zʲ", "t͡sʲd͡zʲ")
 
@@ -259,49 +259,49 @@ object UkrainianG2PEngine {
         p = p.replace("t͡z", "d͡z")
 
         // --- cleanup excessive palatalization CʲCʲCʲ → CCʲCʲ ---
-        p = p.replace(Regex("([^aɛiɪuɔ]+)ʲ([^aɛiɪuɔ]+)ʲ([^aɛiɪuɔ]+)ʲ"), "\\1\\2ʲ\\3ʲ")
+        p = p.replace(Regex("([^aɛiɪuɔ]+)ʲ([^aɛiɪuɔ]+)ʲ([^aɛiɪuɔ]+)ʲ"), "$1$2ʲ$3ʲ")
 
         // --- unstressed vowel allophones ---
-        p = p.replace(Regex("([^ˈˌ⁀])a"), "\\1ɐ")
-        p = p.replace(Regex("([^ˈˌ⁀])u"), "\\1ʊ")
+        p = p.replace(Regex("([^ˈˌ⁀])a"), "$1ɐ")
+        p = p.replace(Regex("([^ˈˌ⁀])u"), "$1ʊ")
         p = p.replace(Regex("ɔ([bdzʒɡɦmnlrpftskxʲʃ͡]+)([ˈˌ⁀][uiʊ])"), "o$1$2")
-        p = p.replace(Regex("([^ˈˌ⁀])[ɛ]"), "\\1e")
+        p = p.replace(Regex("([^ˈˌ⁀])[ɛ]"), "$1e")
 
         // --- remove auto-added monosyllabic stress marker ---
         p = p.replace("⁀", "")
 
         // --- /ʋ/ allophones ---
-        p = p.replace(Regex("($vowelC)ʋ([$consonantNoW#])"), "\\1u̯\\2")
-        p = p.replace(Regex("ʋ([ˈˌ]?[ɔuoʊbdzʒɡɦmnlr])"), "w\\1")
-        p = p.replace(Regex("ʋ([pftskxʃ])"), "ʍ\\1")
+        p = p.replace(Regex("($vowelC)ʋ([$consonantNoW#])"), "$1u̯$2")
+        p = p.replace(Regex("ʋ([ˈˌ]?[ɔuoʊbdzʒɡɦmnlr])"), "w$1")
+        p = p.replace(Regex("ʋ([pftskxʃ])"), "ʍ$1")
 
         // --- /j/ allophones ---
-        p = p.replace(Regex("($vowelC)j([$consonantNoW#])"), "\\1i̯\\2")
-        p = p.replace(Regex("#j($consonantNoWC)"), "#i̯\\1")
+        p = p.replace(Regex("($vowelC)j([$consonantNoW#])"), "$1i̯$2")
+        p = p.replace(Regex("#j($consonantNoWC)"), "#i̯$1")
 
         // --- remove old orthographic apostrophe ---
         p = p.replace("%", "")
 
         // --- stress mark in correct place (1): before final consonant of cluster ---
-        p = p.replace(Regex("([^#" + vowel + "]?[ʲː]*)([ˈˌ])"), "\\2\\1")
+        p = p.replace(Regex("([^#" + vowel + "]?[ʲː]*)([ˈˌ])"), "$2$1")
         // --- (2): over affricate tie bar ---
-        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])"), "\\2\\1")
+        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])"), "$2$1")
 
         // --- (3): over permanent onset clusters ---
         p = onsetReplacement(p)
 
         // --- (4) ---
-        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])(.ʲ?j)"), "\\2\\1\\3")
-        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])(.ʲ?)"), "\\1\\3\\2")
+        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])(.ʲ?j)"), "$2$1$3")
+        p = p.replace(Regex("([^#" + vowel + "]͡)([ˈˌ])(.ʲ?)"), "$1$3$2")
         // --- (5): move back over remaining consonants at word start ---
-        p = p.replace(Regex("#([^#" + vowel + "]+)([ˈˌ])"), "#\\2\\1")
+        p = p.replace(Regex("#([^#" + vowel + "]+)([ˈˌ])"), "#$2$1")
         // --- (6): move back over u̯ / i̯ at word start ---
-        p = p.replace(Regex("#([ui]̯)([ˈˌ])"), "#\\2\\1")
+        p = p.replace(Regex("#([ui]̯)([ˈˌ])"), "#$2$1")
 
         p = p.replace("ʲ?ːʲ", "ʲː")
 
         // --- dark [ɫ] for non-palatal /l/ ---
-        p = p.replace(Regex("l([^ʲ])"), "ɫ\\1")
+        p = p.replace(Regex("l([^ʲ])"), "ɫ$1")
 
         return p
     }
