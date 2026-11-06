@@ -18,12 +18,29 @@ object StressDictionary {
 
     /**
      * Завантажує словник із вхідного потоку (наприклад, з Android assets).
+     * Формат визначається автоматично: якщо потік починається з магії gzip
+     * (1F 8B) — він розпаковується, інакше читається як plain text UTF-8.
      * Можна викликати декілька разів — попередні дані будуть замінені.
      */
     fun load(inputStream: InputStream) {
         stressMap.clear()
-        GZIPInputStream(inputStream).use { gzip ->
-            InputStreamReader(gzip, java.nio.charset.StandardCharsets.UTF_8).use { reader ->
+        // Buffer the head to sniff the format without consuming the stream permanently.
+        val head = ByteArray(2)
+        var read = 0
+        while (read < 2) {
+            val n = inputStream.read(head, read, 2 - read)
+            if (n < 0) break
+            read += n
+        }
+        val isGzip = read == 2 && (head[0].toInt() and 0xFF) == 0x1F && (head[1].toInt() and 0xFF) == 0x8B
+        val source: InputStream = if (isGzip) {
+            java.io.SequenceInputStream(java.io.ByteArrayInputStream(head, 0, read), inputStream)
+                .let { GZIPInputStream(it) }
+        } else {
+            java.io.SequenceInputStream(java.io.ByteArrayInputStream(head, 0, read), inputStream)
+        }
+        source.use { raw ->
+            InputStreamReader(raw, java.nio.charset.StandardCharsets.UTF_8).use { reader ->
                 BufferedReader(reader).use { br ->
                     br.lines().forEach { line ->
                         if (line.isBlank()) return@forEach

@@ -105,7 +105,11 @@ class HolosTtsService : TextToSpeechService() {
         try {
             val assets = assets
             Log.i(TAG, "Loading stress dictionary from assets...")
-            StressDictionary.load(assets.open("word_stress.txt.gz"))
+            // AGP розпаковує .gz-активи під час злиття, тож у APK може лежати
+            // як word_stress.txt.gz, так і word_stress.txt — пробуємо обидва.
+            val dictStream = runCatching { assets.open("word_stress.txt.gz") }
+                .getOrElse { assets.open("word_stress.txt") }
+            StressDictionary.load(dictStream)
             Log.i(TAG, "Stress dictionary loaded, words=${StressDictionary.size}")
             Log.i(TAG, "Loading ONNX model from models dir...")
             onnx = HolosOnnx(getModelDir(this), streaming = true)

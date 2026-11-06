@@ -47,8 +47,8 @@ jobs:
 
       - name: Download ONNX INT8 model bundle (~323 MB)
         run: |
-          mkdir -p android_tts/app/src/main/assets/onnx-int8
-          cd android_tts/app/src/main/assets/onnx-int8
+          mkdir -p android_tts/app/src/main/assets
+          cd android_tts/app/src/main/assets
           for f in encoder.onnx prosody.onnx decoder_window.onnx source.onnx holos_onnx.json voices.npz; do
             curl -fsSL --retry 3 -o "$f" "https://huggingface.co/patriotyk/HolosTTS/resolve/main/onnx-int8/$f?download=true"
           done
