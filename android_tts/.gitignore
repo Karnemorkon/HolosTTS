@@ -1,0 +1,16 @@
+build/
+.gradle/
+local.properties
+*.keystore
+*.jks
+*.key
+
+/app/src/main/assets/onnx-int8/
+/app/build/
+/g2p/build/
+/holos-onnx/build/
+/.gradle/
+
+.DS_Store
+.idea/
+*.iml

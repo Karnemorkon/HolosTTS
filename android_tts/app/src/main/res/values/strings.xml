@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">HolosTTS</string>
+    <string name="settings_title">Налаштування HolosTTS</string>
+    <string name="engine_label">Обчислювальний двигун</string>
+    <string name="engine_litert">LiteRT (GPU)</string>
+    <string name="engine_onnx">ONNX (CPU INT8)</string>
+    <string name="speed_label">Швидкість мовлення</string>
+    <string name="voice_label">Голос</string>
+</resources>

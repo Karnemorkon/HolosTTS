@@ -1,0 +1,26 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "holos-tts-android"
+
+include(":holos-onnx")
+project(":holos-onnx").projectDir = file("holos-onnx")
+
+include(":g2p")
+project(":g2p").projectDir = file("g2p")
+
+include(":app")
+project(":app").projectDir = file("app")
