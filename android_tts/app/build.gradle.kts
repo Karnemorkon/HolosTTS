@@ -16,7 +16,8 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file(System.getenv("RELEASE_KEYSTORE") ?: "")
+            val keystore = System.getenv("RELEASE_KEYSTORE") ?: return@create
+            storeFile = file(keystore)
             storePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: ""
             keyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: ""
             keyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: ""
@@ -29,7 +30,9 @@ android {
         }
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            if (System.getenv("RELEASE_KEYSTORE") != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 
