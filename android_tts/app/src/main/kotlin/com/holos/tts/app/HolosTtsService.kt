@@ -40,29 +40,41 @@ class HolosTtsService : TextToSpeechService() {
 
     override fun onCreate() {
         super.onCreate()
+        Log.i(TAG, "=== HolosTtsService onCreate ===")
         synthThread = HandlerThread("HolosTts-synth", android.os.Process.THREAD_PRIORITY_BACKGROUND)
         synthThread.start()
         synthHandler = Handler(synthThread.looper)
-        Log.i(TAG, "HolosTtsService created")
+        Log.i(TAG, "HandlerThread started")
     }
 
     override fun onBind(intent: Intent): android.os.IBinder? {
-        return super.onBind(intent)
+        Log.i(TAG, "=== onBind: ${intent.action} ===")
+        val binder = super.onBind(intent)
+        Log.i(TAG, "onBind returning binder: ${binder != null}")
+        return binder
     }
 
     override fun onGetLanguage(): Array<String> {
+        Log.i(TAG, "=== onGetLanguage ===")
         return arrayOf("uk")
     }
 
     override fun onIsLanguageAvailable(language: String, country: String?, variant: String?): Int {
-        if (language.equals(LANG, ignoreCase = true) && (country == null || country.equals("UA", ignoreCase = true) || country.isEmpty())) {
-            return TextToSpeech.LANG_AVAILABLE
+        Log.i(TAG, "=== onIsLanguageAvailable: lang='$language' country='$country' variant='$variant' ===")
+        val available = if (language.equals(LANG, ignoreCase = true) && (country == null || country.equals("UA", ignoreCase = true) || country.isEmpty())) {
+            Log.i(TAG, "Language uk available")
+            TextToSpeech.LANG_AVAILABLE
+        } else {
+            Log.i(TAG, "Language NOT supported")
+            TextToSpeech.LANG_NOT_SUPPORTED
         }
-        return TextToSpeech.LANG_NOT_SUPPORTED
+        return available
     }
 
     override fun onLoadLanguage(language: String, country: String?, variant: String?): Int {
+        Log.i(TAG, "=== onLoadLanguage: lang='$language' country='$country' variant='$variant' ===")
         if (language.equals(LANG, ignoreCase = true)) {
+            Log.i(TAG, "Loading uk language, initializing engine...")
             synthHandler.post { initEngine() }
             return TextToSpeech.LANG_AVAILABLE
         }
@@ -71,29 +83,37 @@ class HolosTtsService : TextToSpeechService() {
 
     override fun onSynthesizeText(request: SynthesisRequest, callback: SynthesisCallback) {
         val text = request.text?.toString() ?: ""
+        Log.i(TAG, "=== onSynthesizeText: '$text' ===")
         synthHandler.post { synthesize(text, callback) }
     }
 
     override fun onStop() {
+        Log.i(TAG, "=== onStop ===")
         synthHandler.removeCallbacksAndMessages(null)
         isReleased = true
     }
 
     override fun onDestroy() {
+        Log.i(TAG, "=== onDestroy ===")
         synthThread.quitSafely()
-        onnx.close()
+        try { onnx.close() } catch (e: Exception) { Log.e(TAG, "Error closing ONNX", e) }
         super.onDestroy()
     }
 
     private fun initEngine() {
+        Log.i(TAG, "=== initEngine ===")
         try {
             val assets = assets
+            Log.i(TAG, "Loading stress dictionary from assets...")
             StressDictionary.load(assets.open("word_stress.txt.gz"))
+            Log.i(TAG, "Stress dictionary loaded, words=${StressDictionary.size}")
+            Log.i(TAG, "Loading ONNX model from models dir...")
             onnx = HolosOnnx(getModelDir(this), streaming = true)
             Log.i(TAG, "ONNX engine loaded, sampleRate=${onnx.sampleRate}, voices=${onnx.voices.size}")
             engineReady = true
+            Log.i(TAG, "=== Engine ready ===")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to init engine", e)
+            Log.e(TAG, "=== Failed to init engine ===", e)
         }
     }
 
@@ -104,9 +124,12 @@ class HolosTtsService : TextToSpeechService() {
         for (name in required) {
             val out = File(dir, name)
             if (!out.exists()) {
+                Log.i(TAG, "Extracting $name from assets to ${out.absolutePath}")
                 assets.open(name).use { input ->
                     input.copyTo(FileOutputStream(out), 8192)
                 }
+            } else {
+                Log.i(TAG, "$name already exists (${out.length()} bytes)")
             }
         }
         return dir
@@ -114,11 +137,11 @@ class HolosTtsService : TextToSpeechService() {
 
     private fun synthesize(text: String, callback: SynthesisCallback) {
         if (!engineReady) {
-            Log.e(TAG, "Engine not initialized")
+            Log.e(TAG, "Engine not initialized, cannot synthesize")
             return
         }
         val phonemes = UkrainianTextToPhonemes.toPhonemes(text, StressDictionary)
-        Log.d(TAG, "Synthesizing: $text -> $phonemes")
+        Log.d(TAG, "Synthesizing: '$text' -> '$phonemes'")
 
         val sampleRate = onnx.sampleRate
         val minBufferSize = AudioTrack.getMinBufferSize(sampleRate, AudioFormat.CHANNEL_OUT_MONO, AudioFormat.ENCODING_PCM_16BIT)
